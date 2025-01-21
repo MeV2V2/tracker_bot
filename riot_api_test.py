@@ -12,5 +12,7 @@ full_url = url + '?api_key=' + os.getenv('RIOT_API_TOKEN')
 
 res = requests.get(full_url)
 
+# HTTP Status Code
 print(res)
 
+print(res.json())
