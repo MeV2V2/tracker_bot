@@ -30,20 +30,50 @@ async def register(ctx):
 
         # Checking appropriate format
         if response.content.count('#') == 1:
-            name, tag = response.content.split('#')
+            pass
         else:
             raise ValueError
         
     except asyncio.TimeoutError:
-        await ctx.send("You have been timed out. Please try again.") 
+        await ctx.send('You have been timed out. Please try again.') 
+        return
 
     except ValueError:
-        await ctx.send("Please ensure you have inputted your in-game name in the appropriate format.")
+        await ctx.send('Please ensure you have inputted your in-game name in the appropriate format.')
+        return
+    
+    name, tag = response.content.split('#')
+    puuid = str(get_puuid(name, tag))
+
+    file_path = 'temp_db.json'
+
+    new_data = {
+        'name': name, 
+        'tag': tag,
+        'puuid': puuid
+    }
+
+    # Read data, if exsists
+    try:
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+    except FileNotFoundError:
+        data = []
+
+    data.append(new_data)
+
+    # Write new data back into json file
+    with open(file_path, 'w') as file:
+        json.dump(data, file, indent=4)
+
+    await ctx.send(f'New user: {name}#{tag} has been registered')
+
+
 
 # Helper function to fetch puuid from RIOT API
 # RIOT API token is only valid daily. Next expiry: 25-01-2025 2:30pm AEST
-def getd_puuid(name: str, tag: str):
-    url = f"https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{name}/{tag}"
+def get_puuid(name: str, tag: str):
+    url = f'https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{name}/{tag}'
     full_url = url + '?api_key=' + os.getenv('RIOT_API_TOKEN')
 
     res = requests.get(full_url)
