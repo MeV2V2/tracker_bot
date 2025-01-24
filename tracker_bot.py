@@ -5,6 +5,9 @@ import os
 import asyncio
 import requests
 import json
+from custom_exception import BadHTTPRequest
+
+BAD_REQUEST = 400
 
 dotenv.load_dotenv()
 
@@ -42,8 +45,15 @@ async def register(ctx):
         await ctx.send('Please ensure you have inputted your in-game name in the appropriate format.')
         return
     
+
     name, tag = response.content.split('#')
-    puuid = str(get_puuid(name, tag))
+    try:
+        puuid = get_puuid(name, tag)
+        if not puuid:
+            raise BadHTTPRequest
+    except BadHTTPRequest:
+        await ctx.send('HTTP Error. Please try again later.')
+        return
 
     file_path = 'temp_db.json'
 
@@ -57,8 +67,13 @@ async def register(ctx):
     try:
         with open(file_path, 'r') as file:
             data = json.load(file)
+            if check_puuid_duplicate(data, puuid):
+                raise Exception
     except FileNotFoundError:
         data = []
+    except Exception:
+        await ctx.send(f'{name}#{tag} is already a registered user')
+        return
 
     data.append(new_data)
 
@@ -69,6 +84,9 @@ async def register(ctx):
     await ctx.send(f'New user: {name}#{tag} has been registered')
 
 
+def check_puuid_duplicate(data: list, puuid: str):
+    return any(line.get('puuid') == puuid for line in data)
+
 
 # Helper function to fetch puuid from RIOT API
 # RIOT API token is only valid daily. Next expiry: 25-01-2025 2:30pm AEST
@@ -78,9 +96,10 @@ def get_puuid(name: str, tag: str):
 
     res = requests.get(full_url)
 
-    return res.json()['puuid']
-    
+    if res.status_code >= BAD_REQUEST:
+        return False
 
+    return res.json()['puuid']
 
 
 token = str(os.getenv('BOT_TOKEN'))
