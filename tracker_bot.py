@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import dotenv
 import os
+import asyncio
 
 dotenv.load_dotenv()
 
@@ -18,12 +19,16 @@ async def on_ready():
 async def register(ctx):
     await ctx.send('Input your in-game name in the form NAME#TAG: ')
 
+    # A function that checks to ensure bot does not recognise its own messages
     def check(message: discord.Message):
         return message.author == ctx.author and message.channel == ctx.channel
 
-    response = await bot.wait_for('message', timeout=30.0, check=check)
+    try:
+        response = await bot.wait_for('message', timeout=30.0, check=check)
+    except asyncio.TimeoutError:
+        await ctx.send("You have been timed out. Please try again.") 
 
-    await ctx.send("test")
+    
 
 
 
