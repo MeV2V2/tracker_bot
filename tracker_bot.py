@@ -9,6 +9,10 @@ import random
 from custom_exception import BadHTTPRequest
 from openai import OpenAI
 
+# Author: Jaemin Park
+# Student id: 33879478
+# Date: 25/01/2024
+
 BAD_REQUEST = 400
 
 dotenv.load_dotenv()
