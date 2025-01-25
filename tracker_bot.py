@@ -5,6 +5,7 @@ import os
 import asyncio
 import requests
 import json
+import random
 from custom_exception import BadHTTPRequest
 
 BAD_REQUEST = 400
@@ -60,7 +61,10 @@ async def register(ctx):
     new_data = {
         'name': name, 
         'tag': tag,
-        'puuid': puuid
+        'puuid': puuid,
+        # I am using a random integer to represent the rank of someone on valorant
+        # Reasoning: Haven't been approved for higher level RIOT API access nor tracker.gg API 
+        'rank': str(random.randint(1, 100))
     }
 
     # Read data, if exsists
@@ -84,12 +88,17 @@ async def register(ctx):
     await ctx.send(f'New user: {name}#{tag} has been registered')
 
 
+@bot.command(name='rank', description='Outlines the rank of the user')
+async def rank(ctx):
+    pass
+
+
 def check_puuid_duplicate(data: list, puuid: str):
     return any(line.get('puuid') == puuid for line in data)
 
 
 # Helper function to fetch puuid from RIOT API
-# RIOT API token is only valid daily. Next expiry: 25-01-2025 2:30pm AEST
+# RIOT API token is only valid daily. Next expiry: 26-01-2025 4:37pm AEST
 def get_puuid(name: str, tag: str):
     url = f'https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{name}/{tag}'
     full_url = url + '?api_key=' + os.getenv('RIOT_API_TOKEN')
