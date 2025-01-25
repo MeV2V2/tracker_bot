@@ -161,68 +161,6 @@ async def leaderboard(ctx):
         await ctx.send(f'Rank {rank}: {ign}')
 
 
-@bot.command(name='comment_on', description='Comment on the skill level of a chosen player, depending on their rank')
-async def comment_on(ctx):
-    await ctx.send('Input the NAME#TAG of the user you want tracker_bot to comment on: ')
-
-    # A function that checks to ensure bot does not recognise its own messages
-    def check(message: discord.Message):
-        return message.author == ctx.author and message.channel == ctx.channel
-
-    try:
-        response = await bot.wait_for('message', timeout=30.0, check=check)
-
-        # Checking appropriate format
-        if response.content.count('#') == 1:
-            pass
-        else:
-            raise ValueError
-        
-    except asyncio.TimeoutError:
-        await ctx.send('You have been timed out. Please try again.') 
-        return
-
-    except ValueError:
-        await ctx.send('Please ensure you have inputted your in-game name in the appropriate format.')
-        return
-    
-    name, tag = response.content.split('#')
-    rank = False
-    
-    file_path = 'temp_db.json'
-    
-    # Read data, if exsists
-    try:
-        with open(file_path, 'r') as file:
-            data = json.load(file)
-            for line in data:
-                if line.get('name') == name and line.get('tag') == tag:
-                    rank = line.get('rank')
-                    break
-            if not rank:
-                raise ValueError
-    except FileNotFoundError:
-        await ctx.send('No one is currently registered, please try again after registering at least 1 user.')
-        return
-    except ValueError:
-        await ctx.send(f'{name}#{tag} is currently not registered within our database. Please try again after registering with the register command.')
-        return
-
-
-    client = OpenAI(api_key=os.getenv('GPT_API_TOKEN'))
-
-    message = client.chat.completions.create(
-        model='gpt-4o-mini',
-        store=True,
-        messages={
-            'role':'user',
-            'content':f'considering a user is ranked {rank} out of 100, comment on his performance (be harsh)'
-        }
-    )
-
-    await ctx.send(f'{message.choices[0].message}')
-
-
 def check_puuid_duplicate(data: list, puuid: str):
     return any(line.get('puuid') == puuid for line in data)
 
