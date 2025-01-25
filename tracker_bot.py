@@ -7,6 +7,7 @@ import requests
 import json
 import random
 from custom_exception import BadHTTPRequest
+from openai import OpenAI
 
 BAD_REQUEST = 400
 
@@ -117,7 +118,7 @@ async def rank(ctx):
     
     file_path = 'temp_db.json'
     
-        # Read data, if exsists
+    # Read data, if exsists
     try:
         with open(file_path, 'r') as file:
             data = json.load(file)
@@ -132,9 +133,33 @@ async def rank(ctx):
     except ValueError:
         await ctx.send(f'{name}#{tag} is currently not registered within our database. Please try again after registering with the register command.')
         return
-    
-    
-    
+
+
+@bot.command(name='leaderboard', description='Displays the leaderboard of all registered players')
+async def leaderboard(ctx):
+    """
+    Command that displays the leaderboard of all currently registered players
+
+    Upon calling command, the bot displays users in order of their ranks
+    """
+    file_path = 'temp_db.json'
+
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+        list_leaderboard = []
+        # Get all players within database
+        for line in data:
+            list_leaderboard.append((line.get('name'), line.get('tag'), line.get('rank')))
+
+        # Sort players based on ranks
+        list_leaderboard = sorted(list_leaderboard, key=lambda item: item[2])
+
+    # Designate bot to display players in order of rank
+    for item in list_leaderboard:
+        ign = f'{item[0]}#{item[1]}'
+        rank = f'{item[2]}'
+        await ctx.send(f'Rank {rank}: {ign}')
+
 
 def check_puuid_duplicate(data: list, puuid: str):
     return any(line.get('puuid') == puuid for line in data)
