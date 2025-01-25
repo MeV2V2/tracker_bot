@@ -24,6 +24,13 @@ async def on_ready():
 
 @bot.command(name='register', description='Register a new user into the database.')
 async def register(ctx):
+    """
+    Command to register a user into the database
+
+    Will also fetch puuid of user from RIOT API for further use within the system
+
+    Time-complexity: O(HTTP), where HTTP is the time it takes in order to get a return message from the relevant API
+    """
     await ctx.send('Input your in-game name in the form NAME#TAG: ')
 
     # A function that checks to ensure bot does not recognise its own messages
@@ -72,6 +79,7 @@ async def register(ctx):
     try:
         with open(file_path, 'r') as file:
             data = json.load(file)
+            # Check if user already exsists within the database
             if check_puuid_duplicate(data, puuid):
                 raise Exception
     except FileNotFoundError:
@@ -91,6 +99,13 @@ async def register(ctx):
 
 @bot.command(name='rank', description='Outlines the rank of the user')
 async def rank(ctx):
+    """
+    Comand that allows you to view the rank of members of the database
+    
+    Due to current API complications with RIOT API, ranks are currently randomly generated. Awaiting on higher level access form RIOT
+
+    Time-complexity: O(n), where n is the number of registered users within the database
+    """
     await ctx.send('Input the NAME#TAG of the user whose rank you want to fetch: ')
 
     # A function that checks to ensure bot does not recognise its own messages
@@ -122,6 +137,7 @@ async def rank(ctx):
     try:
         with open(file_path, 'r') as file:
             data = json.load(file)
+            # Find the requested user
             for line in data:
                 if line.get('name') == name and line.get('tag') == tag:
                     await ctx.send(f'{name}#{tag} is currently ranked: {line.get("rank")}')
@@ -141,6 +157,9 @@ async def leaderboard(ctx):
     Command that displays the leaderboard of all currently registered players
 
     Upon calling command, the bot displays users in order of their ranks
+
+    Time-complexity: O(n + HTTP), where n is the number of users currently registered in the database 
+    and HTTP is the time it takes in order to receive a response from the relevant API
     """
     file_path = 'temp_db.json'
 
@@ -162,17 +181,29 @@ async def leaderboard(ctx):
 
 
 def check_puuid_duplicate(data: list, puuid: str):
+    """
+    Helper function which determines puuid duplicates
+
+    Time-complexity: O(n), where n is the number of users currently registered within the database.
+    """
     return any(line.get('puuid') == puuid for line in data)
 
 
 # Helper function to fetch puuid from RIOT API
 # RIOT API token is only valid daily. Next expiry: 26-01-2025 4:37pm AEST
 def get_puuid(name: str, tag: str):
+    """
+    Helper function which obtains puuid of a player form their in game name and tag through the RIOT API
+
+    Time-complexity: O(HTTP), where HTTP is the time it takes in order to get a return message from the relevant API
+    """
     url = f'https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{name}/{tag}'
+    # Adding personal token
     full_url = url + '?api_key=' + os.getenv('RIOT_API_TOKEN')
 
     res = requests.get(full_url)
 
+    # Checks if request is good or bad
     if res.status_code >= BAD_REQUEST:
         return False
 
