@@ -90,8 +90,51 @@ async def register(ctx):
 
 @bot.command(name='rank', description='Outlines the rank of the user')
 async def rank(ctx):
-    pass
+    await ctx.send('Input your in-game name in the form NAME#TAG: ')
 
+    # A function that checks to ensure bot does not recognise its own messages
+    def check(message: discord.Message):
+        return message.author == ctx.author and message.channel == ctx.channel
+
+    try:
+        response = await bot.wait_for('message', timeout=30.0, check=check)
+
+        # Checking appropriate format
+        if response.content.count('#') == 1:
+            pass
+        else:
+            raise ValueError
+        
+    except asyncio.TimeoutError:
+        await ctx.send('You have been timed out. Please try again.') 
+        return
+
+    except ValueError:
+        await ctx.send('Please ensure you have inputted your in-game name in the appropriate format.')
+        return
+    
+    name, tag = response.content.split('#')
+    
+    file_path = 'temp_db.json'
+    
+        # Read data, if exsists
+    try:
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+            for line in data:
+                if line.get('name') == name and line.get('tag') == tag:
+                    await ctx.send(f'{name}#{tag} is currently ranked: {line.get("rank")}')
+                    return
+            raise ValueError
+    except FileNotFoundError:
+        await ctx.send('No one is currently registered, please try again after registering at least 1 user.')
+        return
+    except ValueError:
+        await ctx.send(f'{name}#{tag} is currently not registered within our database. Please try again after registering with the register command.')
+        return
+    
+    
+    
 
 def check_puuid_duplicate(data: list, puuid: str):
     return any(line.get('puuid') == puuid for line in data)
