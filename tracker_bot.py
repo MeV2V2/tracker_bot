@@ -161,6 +161,20 @@ async def leaderboard(ctx):
         await ctx.send(f'Rank {rank}: {ign}')
 
 
+@bot.command(name='comment_on', description='Comment on the skill level of a chosen player, depending on their rank')
+async def comment_on(ctx):
+    client = OpenAI(api_key=os.getenv('GPT_API_TOKEN'))
+
+    message = client.chat.completions.create(
+        model='gpt-4o-mini',
+        store=True,
+        messages={
+            'role':'user',
+            'content':'test'
+        }
+    )
+
+
 def check_puuid_duplicate(data: list, puuid: str):
     return any(line.get('puuid') == puuid for line in data)
 
